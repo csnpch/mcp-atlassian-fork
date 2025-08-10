@@ -20,13 +20,14 @@ class ConfluenceConfig:
 
     Handles authentication for Confluence Cloud and Server/Data Center:
     - Cloud: username/API token (basic auth) or OAuth 2.0 (3LO)
-    - Server/DC: personal access token or basic auth
+    - Server/DC: personal access token or basic auth with password
     """
 
     url: str  # Base URL for Confluence
     auth_type: Literal["basic", "pat", "oauth"]  # Authentication type
     username: str | None = None  # Email or username
     api_token: str | None = None  # API token used as password
+    password: str | None = None  # Password (Server/DC) - used when API tokens are blocked
     personal_token: str | None = None  # Personal access token (Server/DC)
     oauth_config: OAuthConfig | BYOAccessTokenOAuthConfig | None = None
     ssl_verify: bool = True  # Whether to verify SSL certificates
@@ -84,6 +85,7 @@ class ConfluenceConfig:
         # Determine authentication type based on available environment variables
         username = os.getenv("CONFLUENCE_USERNAME")
         api_token = os.getenv("CONFLUENCE_API_TOKEN")
+        password = os.getenv("CONFLUENCE_PASSWORD")
         personal_token = os.getenv("CONFLUENCE_PERSONAL_TOKEN")
 
         # Check for OAuth configuration
@@ -105,11 +107,11 @@ class ConfluenceConfig:
         else:  # Server/Data Center
             if personal_token:
                 auth_type = "pat"
-            elif username and api_token:
-                # Allow basic auth for Server/DC too
+            elif username and (password or api_token):
+                # Allow basic auth for Server/DC with password or api_token
                 auth_type = "basic"
             else:
-                error_msg = "Server/Data Center authentication requires CONFLUENCE_PERSONAL_TOKEN or CONFLUENCE_USERNAME and CONFLUENCE_API_TOKEN"
+                error_msg = "Server/Data Center authentication requires CONFLUENCE_PERSONAL_TOKEN or CONFLUENCE_USERNAME with CONFLUENCE_PASSWORD/CONFLUENCE_API_TOKEN"
                 raise ValueError(error_msg)
 
         # SSL verification (for Server/DC)
@@ -132,6 +134,7 @@ class ConfluenceConfig:
             auth_type=auth_type,
             username=username,
             api_token=api_token,
+            password=password,
             personal_token=personal_token,
             oauth_config=oauth_config,
             ssl_verify=ssl_verify,
@@ -185,7 +188,7 @@ class ConfluenceConfig:
         elif self.auth_type == "pat":
             return bool(self.personal_token)
         elif self.auth_type == "basic":
-            return bool(self.username and self.api_token)
+            return bool(self.username and (self.password or self.api_token))
         logger.warning(
             f"Unknown or unsupported auth_type: {self.auth_type} in ConfluenceConfig"
         )

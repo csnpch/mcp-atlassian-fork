@@ -78,7 +78,7 @@ class ConfluenceClient:
             self.confluence = Confluence(
                 url=self.config.url,
                 username=self.config.username,
-                password=self.config.api_token,  # API token is used as password
+                password=self.config.password or self.config.api_token,  # Use password if available, otherwise API token
                 cloud=self.config.is_cloud,
                 verify_ssl=self.config.ssl_verify,
             )

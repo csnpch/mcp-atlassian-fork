@@ -88,12 +88,13 @@ class JiraClient:
                 f"Initializing Jira client with Basic auth. "
                 f"URL: {self.config.url}, Username: {self.config.username}, "
                 f"API Token present: {bool(self.config.api_token)}, "
+                f"Password present: {bool(self.config.password)}, "
                 f"Is Cloud: {self.config.is_cloud}"
             )
             self.jira = Jira(
                 url=self.config.url,
                 username=self.config.username,
-                password=self.config.api_token,
+                password=self.config.password or self.config.api_token,
                 cloud=self.config.is_cloud,
                 verify_ssl=self.config.ssl_verify,
             )
@@ -101,6 +102,10 @@ class JiraClient:
                 f"Jira client initialized. Session headers (Authorization masked): "
                 f"{get_masked_session_headers(dict(self.jira._session.headers))}"
             )
+            logger.debug(f"Session auth configured: {bool(self.jira._session.auth)}")
+            if self.jira._session.auth:
+                logger.debug(f"Auth username: {self.jira._session.auth[0]}")
+                logger.debug(f"Auth password length: {len(self.jira._session.auth[1]) if self.jira._session.auth[1] else 0}")
 
         # Configure SSL verification using the shared utility
         configure_ssl_verification(

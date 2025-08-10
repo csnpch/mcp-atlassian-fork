@@ -54,6 +54,18 @@ MCP Atlassian supports three authentication methods:
 2. Click **Create token**, name it, set expiry
 3. Copy the token immediately
 
+#### B-2. Username/Password Authentication (Server/Data Center) - **Alternative**
+
+> [!NOTE]
+> For organizations that block API tokens, you can use traditional username/password authentication.
+> Password takes priority over API token when both are provided.
+
+Set these environment variables:
+- `JIRA_USERNAME` - Your Jira username
+- `JIRA_PASSWORD` - Your Jira password (prioritized over API token)
+- `CONFLUENCE_USERNAME` - Your Confluence username  
+- `CONFLUENCE_PASSWORD` - Your Confluence password (prioritized over API token)
+
 #### C. OAuth 2.0 Authentication (Cloud) - **Advanced**
 
 > [!NOTE]
@@ -120,7 +132,58 @@ docker pull ghcr.io/sooperset/mcp-atlassian:latest
 
 ## 🛠️ IDE Integration
 
-MCP Atlassian is designed to be used with AI assistants through IDE integration.
+MCP Atlassian supports multiple connection methods:
+
+### 🚀 **HTTP Server Mode (Recommended)**
+
+Run as a persistent HTTP server for better performance and easier management:
+
+```bash
+# Start the server with Docker Compose
+docker-compose up -d
+
+# Or manually with Docker
+docker run -d --name mcp-atlassian \
+  -p 8000:8000 \
+  --env-file .env \
+  ghcr.io/sooperset/mcp-atlassian:latest \
+  --transport sse --port 8000
+```
+
+**Claude Code Configuration** (`.claude-code/mcp.json`):
+```json
+{
+  "mcpServers": {
+    "mcp-atlassian": {
+      "type": "sse",
+      "url": "http://localhost:8000/sse"
+    }
+  }
+}
+```
+
+**Cursor IDE Configuration** (`.cursor-settings/mcp.json`):
+```json
+{
+  "mcpServers": {
+    "mcp-atlassian": {
+      "type": "sse", 
+      "url": "http://localhost:8000/sse"
+    }
+  }
+}
+```
+
+> [!TIP]
+> **HTTP Server Benefits:**
+> - ⚡ **Faster**: No Docker startup time on each request
+> - 🔄 **Persistent**: Server runs continuously, ready to use
+> - 📊 **Easy monitoring**: Real-time logs with `docker logs -f mcp-atlassian`
+> - 🏗️ **Multi-client**: Use from multiple IDEs simultaneously
+
+### 📦 **Direct Docker Mode (Alternative)**
+
+Run Docker container directly for each request:
 
 > [!TIP]
 > **For Claude Desktop**: Locate and edit the configuration file directly:
@@ -130,7 +193,7 @@ MCP Atlassian is designed to be used with AI assistants through IDE integration.
 >
 > **For Cursor**: Open Settings → MCP → + Add new global MCP server
 
-### ⚙️ Configuration Methods
+### ⚙️ Direct Docker Configuration Methods
 
 There are two main approaches to configure the Docker container:
 
@@ -717,6 +780,78 @@ Here's a complete example of setting up multi-user authentication with streamabl
 > - User tokens should have appropriate scopes for their needed operations
 
 </details>
+
+### 🎯 IDE Configuration Examples
+
+#### Cursor IDE Configuration
+```json
+{
+  "mcpServers": {
+    "mcp-atlassian": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e", "JIRA_URL",
+        "-e", "JIRA_USERNAME",
+        "-e", "JIRA_PASSWORD",
+        "-e", "CONFLUENCE_URL",
+        "-e", "CONFLUENCE_USERNAME",
+        "-e", "CONFLUENCE_PASSWORD",
+        "-e", "JIRA_SSL_VERIFY",
+        "-e", "CONFLUENCE_SSL_VERIFY",
+        "ghcr.io/sooperset/mcp-atlassian:latest"
+      ],
+      "env": {
+        "JIRA_URL": "https://your-jira-instance.com",
+        "JIRA_USERNAME": "your-username",
+        "JIRA_PASSWORD": "your-password",
+        "CONFLUENCE_URL": "https://your-confluence-instance.com",
+        "CONFLUENCE_USERNAME": "your-username",
+        "CONFLUENCE_PASSWORD": "your-password",
+        "JIRA_SSL_VERIFY": "true",
+        "CONFLUENCE_SSL_VERIFY": "true"
+      }
+    }
+  }
+}
+```
+
+#### Claude Code Configuration  
+```json
+{
+  "mcpServers": {
+    "mcp-atlassian": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e", "JIRA_URL",
+        "-e", "JIRA_USERNAME",
+        "-e", "JIRA_PASSWORD",
+        "-e", "CONFLUENCE_URL",
+        "-e", "CONFLUENCE_USERNAME",
+        "-e", "CONFLUENCE_PASSWORD",
+        "-e", "JIRA_SSL_VERIFY",
+        "-e", "CONFLUENCE_SSL_VERIFY",
+        "ghcr.io/sooperset/mcp-atlassian:latest"
+      ],
+      "env": {
+        "JIRA_URL": "https://your-jira-instance.com",
+        "JIRA_USERNAME": "your-username",
+        "JIRA_PASSWORD": "your-password",
+        "CONFLUENCE_URL": "https://your-confluence-instance.com",
+        "CONFLUENCE_USERNAME": "your-username",
+        "CONFLUENCE_PASSWORD": "your-password",
+        "JIRA_SSL_VERIFY": "true",
+        "CONFLUENCE_SSL_VERIFY": "true"
+      }
+    }
+  }
+}
+```
 
 ## Tools
 

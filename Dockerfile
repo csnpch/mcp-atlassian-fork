@@ -52,4 +52,9 @@ ENV PATH="/app/.venv/bin:$PATH"
 # Authorization: Bearer <your_oauth_token>
 # X-Atlassian-Cloud-Id: <your_cloud_id>
 
+# For password authentication (when API tokens are blocked):
+# docker run -e JIRA_URL=... -e JIRA_USERNAME=... -e JIRA_PASSWORD=... your-image
+# docker run -e CONFLUENCE_URL=... -e CONFLUENCE_USERNAME=... -e CONFLUENCE_PASSWORD=... your-image
+# Note: Password takes priority over API token when both are provided
+
 ENTRYPOINT ["mcp-atlassian"]

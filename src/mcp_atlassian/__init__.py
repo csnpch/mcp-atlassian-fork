@@ -75,6 +75,7 @@ logger = setup_logging(logging_level, logging_stream)
 )
 @click.option("--confluence-username", help="Confluence username/email")
 @click.option("--confluence-token", help="Confluence API token")
+@click.option("--confluence-password", help="Confluence password (Server/Data Center)")
 @click.option(
     "--confluence-personal-token",
     help="Confluence Personal Access Token (for Confluence Server/Data Center)",
@@ -94,6 +95,7 @@ logger = setup_logging(logging_level, logging_stream)
 )
 @click.option("--jira-username", help="Jira username/email (for Jira Cloud)")
 @click.option("--jira-token", help="Jira API token (for Jira Cloud)")
+@click.option("--jira-password", help="Jira password (Server/Data Center)")
 @click.option(
     "--jira-personal-token",
     help="Jira Personal Access Token (for Jira Server/Data Center)",
@@ -152,12 +154,14 @@ def main(
     confluence_url: str | None,
     confluence_username: str | None,
     confluence_token: str | None,
+    confluence_password: str | None,
     confluence_personal_token: str | None,
     confluence_ssl_verify: bool,
     confluence_spaces_filter: str | None,
     jira_url: str | None,
     jira_username: str | None,
     jira_token: str | None,
+    jira_password: str | None,
     jira_personal_token: str | None,
     jira_ssl_verify: bool,
     jira_projects_filter: str | None,
@@ -273,6 +277,8 @@ def main(
         os.environ["CONFLUENCE_USERNAME"] = confluence_username
     if click_ctx and was_option_provided(click_ctx, "confluence_token"):
         os.environ["CONFLUENCE_API_TOKEN"] = confluence_token
+    if click_ctx and was_option_provided(click_ctx, "confluence_password"):
+        os.environ["CONFLUENCE_PASSWORD"] = confluence_password
     if click_ctx and was_option_provided(click_ctx, "confluence_personal_token"):
         os.environ["CONFLUENCE_PERSONAL_TOKEN"] = confluence_personal_token
     if click_ctx and was_option_provided(click_ctx, "jira_url"):
@@ -281,6 +287,8 @@ def main(
         os.environ["JIRA_USERNAME"] = jira_username
     if click_ctx and was_option_provided(click_ctx, "jira_token"):
         os.environ["JIRA_API_TOKEN"] = jira_token
+    if click_ctx and was_option_provided(click_ctx, "jira_password"):
+        os.environ["JIRA_PASSWORD"] = jira_password
     if click_ctx and was_option_provided(click_ctx, "jira_personal_token"):
         os.environ["JIRA_PERSONAL_TOKEN"] = jira_personal_token
     if click_ctx and was_option_provided(click_ctx, "oauth_client_id"):

@@ -19,6 +19,7 @@ from mcp_atlassian.confluence import ConfluenceFetcher
 from mcp_atlassian.confluence.config import ConfluenceConfig
 from mcp_atlassian.jira import JiraFetcher
 from mcp_atlassian.jira.config import JiraConfig
+from mcp_atlassian.utils.auth_validator import validate_confluence_auth, validate_jira_auth
 from mcp_atlassian.utils.environment import get_available_services
 from mcp_atlassian.utils.io import is_read_only_mode
 from mcp_atlassian.utils.logging import mask_sensitive
@@ -50,30 +51,43 @@ async def main_lifespan(app: FastMCP[MainAppContext]) -> AsyncIterator[dict]:
             jira_config = JiraConfig.from_env()
             if jira_config.is_auth_configured():
                 loaded_jira_config = jira_config
-                logger.info(
-                    "Jira configuration loaded and authentication is configured."
-                )
+                
+                # Optional: Validate authentication at startup
+                try:
+                    if validate_jira_auth(jira_config):
+                        logger.info("Jira configuration loaded and authentication validated successfully.")
+                    else:
+                        logger.warning("Jira authentication validation failed, but continuing anyway. Tools may not work properly.")
+                except Exception as e:
+                    logger.warning(f"Could not validate Jira authentication: {e}. Continuing anyway.")
             else:
                 logger.warning(
                     "Jira URL found, but authentication is not fully configured. Jira tools will be unavailable."
                 )
         except Exception as e:
             logger.error(f"Failed to load Jira configuration: {e}", exc_info=True)
+            # Continue without re-raising to prevent startup failure
 
     if services.get("confluence"):
         try:
             confluence_config = ConfluenceConfig.from_env()
             if confluence_config.is_auth_configured():
-                loaded_confluence_config = confluence_config
-                logger.info(
-                    "Confluence configuration loaded and authentication is configured."
-                )
+                # Validate authentication at startup (optional)
+                if validate_confluence_auth(confluence_config):
+                    loaded_confluence_config = confluence_config
+                    logger.info(
+                        "Confluence configuration loaded and authentication validated successfully."
+                    )
+                else:
+                    logger.warning("Confluence authentication validation failed, but continuing anyway. Tools may not work properly.")
+                    loaded_confluence_config = confluence_config  # Load config anyway
             else:
                 logger.warning(
                     "Confluence URL found, but authentication is not fully configured. Confluence tools will be unavailable."
                 )
         except Exception as e:
             logger.error(f"Failed to load Confluence configuration: {e}", exc_info=True)
+            # Continue without re-raising to prevent startup failure
 
     app_context = MainAppContext(
         full_jira_config=loaded_jira_config,
